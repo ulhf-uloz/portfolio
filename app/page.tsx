@@ -51,7 +51,7 @@ export default function Page() {
       }
 
       // 訪問履歴の取得
-      const { data: visitsData } = await supabase.from('visits').select('*').order('created_at', { ascending: false })
+      const { data: visitsData } = await supabase.from('visit_logs').select('*').order('created_at', { ascending: false })
       if (visitsData) {
         setVisits(visitsData.map((v: { id: number; spot_id: number; date: string | null; rating: number | null; memo: string | null }) => ({
           id: v.id,
@@ -62,7 +62,11 @@ export default function Page() {
         })))
       }
     }
-    fetchData()
+    fetchData(const { data: spotsData, error } =
+  await supabase.from('spots').select('*')
+
+console.log('spotsData', spotsData)
+console.log('error', error))
   }, [])
 
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
@@ -74,7 +78,7 @@ export default function Page() {
     
     const newVisit = { spot_id: selected.id, date: '今日', rating: 0, memo: '' }
     const { data, error } = supabase
-      ? await supabase.from('visits').insert([newVisit]).select().single()
+      ? await supabase.from('visit_logs').insert([newVisit]).select().single()
       : { data: null, error: true }
 
     if (!error && data) {
@@ -93,7 +97,7 @@ export default function Page() {
     
     const existing = visits.find((item) => item.spotId === selected.id)
     if (existing) {
-      await supabase?.from('visits').update({ rating, memo }).eq('spot_id', selected.id)
+      await supabase?.from('visit_logs').update({ rating, memo }).eq('spot_id', selected.id)
       setVisits((items) => items.map((item) => item.spotId === selected.id ? { ...item, rating, memo } : item))
       showToast(updating ? 'レビューを更新しました' : 'レビューを保存しました')
     }
@@ -101,7 +105,7 @@ export default function Page() {
 
   // 訪問履歴の削除
   const handleDeleteVisit = async (id: number, spotId: number) => {
-    await supabase?.from('visits').delete().eq('id', id)
+    await supabase?.from('visit_logs').delete().eq('id', id)
     setVisits((items) => items.filter((visitItem) => visitItem.id !== id))
     showToast('削除しました')
   }
