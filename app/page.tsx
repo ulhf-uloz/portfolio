@@ -8,13 +8,15 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-})
+const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null
 
 type Mood = 'ご飯' | 'リラックス' | 'アクティビティ'
 type Visit = { id: number; spotId: number; date: string; rating: number; memo: string }
@@ -41,6 +43,7 @@ export default function Page() {
   // Supabaseからスポットデータと訪問履歴を取得
   useEffect(() => {
     const fetchData = async () => {
+      if (!supabase) return
       // スポット一覧の取得
       const { data: spotsData } = await supabase.from('spots').select('*')
       if (spotsData && spotsData.length > 0) {
@@ -70,7 +73,9 @@ export default function Page() {
     if (!selected || visits.some((item) => item.spotId === selected.id)) return
     
     const newVisit = { spot_id: selected.id, date: '今日', rating: 0, memo: '' }
-    const { data, error } = await supabase.from('visits').insert([newVisit]).select().single()
+    const { data, error } = supabase
+      ? await supabase.from('visits').insert([newVisit]).select().single()
+      : { data: null, error: true }
 
     if (!error && data) {
       setVisits((current) => [{ id: data.id, spotId: selected.id, date: '今日', rating: 0, memo: '' }, ...current])
@@ -88,7 +93,7 @@ export default function Page() {
     
     const existing = visits.find((item) => item.spotId === selected.id)
     if (existing) {
-      await supabase.from('visits').update({ rating, memo }).eq('spot_id', selected.id)
+      await supabase?.from('visits').update({ rating, memo }).eq('spot_id', selected.id)
       setVisits((items) => items.map((item) => item.spotId === selected.id ? { ...item, rating, memo } : item))
       showToast(updating ? 'レビューを更新しました' : 'レビューを保存しました')
     }
@@ -96,7 +101,7 @@ export default function Page() {
 
   // 訪問履歴の削除
   const handleDeleteVisit = async (id: number, spotId: number) => {
-    await supabase.from('visits').delete().eq('id', id)
+    await supabase?.from('visits').delete().eq('id', id)
     setVisits((items) => items.filter((visitItem) => visitItem.id !== id))
     showToast('削除しました')
   }
