@@ -45,7 +45,9 @@ export default function Page() {
     const fetchData = async () => {
       if (!supabase) return
       // スポット一覧の取得
-      const { data: spotsData } = await supabase.from('spots').select('*')
+      const { data: spotsData, error } = await supabase.from('spots').select('*')
+      console.log('spotsData', spotsData)
+      console.log('error', error)
       if (spotsData && spotsData.length > 0) {
         setSpots(spotsData)
       }
@@ -62,11 +64,7 @@ export default function Page() {
         })))
       }
     }
-    fetchData(const { data: spotsData, error } =
-  await supabase.from('spots').select('*')
-
-console.log('spotsData', spotsData)
-console.log('error', error))
+    fetchData()
   }, [])
 
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
