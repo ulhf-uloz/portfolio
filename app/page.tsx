@@ -6,8 +6,18 @@ import { supabase } from '@/lib/supabase/client'
 
 type Mood = 'ご飯' | 'リラックス' | 'アクティビティ'
 type Visit = { id: number; spotId: number; date: string; rating: number; memo: string }
-type Spot = { id: number; title: string; area: string; category: Mood; stamina: string; duration: string; description: string; access: string; image: string; map: string }
-
+type Spot = {
+  id: number
+  title: string
+  area: string
+  category: Mood
+  stamina: string
+  duration: string
+  description: string
+  access: string
+  image: string
+  map: string
+}
 // 初期表示用フォールバックデータ
 const initialSpots: Spot[] = [
   { id: 1, title: '千光寺公園', area: '尾道', category: 'リラックス', stamina: '散歩レベル', duration: '半日', description: '尾道の街並みと瀬戸内海を一望できる、気分転換にぴったりの高台の公園。ロープウェイで気軽にアクセスできます。', access: 'JR尾道駅から徒歩約15分 / ロープウェイ山頂駅すぐ', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=85', map: 'https://maps.google.com/?q=千光寺公園' },
@@ -50,20 +60,19 @@ useEffect(() => {
 
     // 訪問履歴の取得
     const { data: visitsData } = await supabase
-      .from('visit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-
+  .from('visit_logs')
+  .select('*')
+  .order('visited_at', { ascending: false })
     if (visitsData) {
-      setVisits(
-        visitsData.map((v) => ({
-          id: v.id,
-          spotId: v.spot_id,
-          date: v.date || '今日',
-          rating: v.rating || 0,
-          memo: v.memo || ''
-        }))
-      )
+     setVisits(
+  visitsData.map((v) => ({
+    id: v.id,
+    spotId: v.spots_id,
+    date: v.visited_at || '今日',
+    rating: v.rating || 0,
+    memo: v.memo || ''
+  }))
+)
     }
   }
 
@@ -72,32 +81,58 @@ useEffect(() => {
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
   const openDetail = (spot: Spot) => { setSelected(spot); setView('detail') }
 
-  // Supabaseへ訪問記録を追加
-  const visit = async () => {
-    if (!selected || visits.some((item) => item.spotId === selected.id)) return
-    
-    const newVisit = { spot_id: selected.id, date: '今日', rating: 0, memo: '' }
-    const { data, error } = supabase
-      ? await supabase.from('visit_logs').insert([newVisit]).select().single()
-      : { data: null, error: true }
+// Supabaseへ訪問記録を追加
+const visit = async () => {
+  if (!selected || !user || !supabase) return
 
-    if (!error && data) {
-      setVisits((current) => [{ id: data.id, spotId: selected.id, date: '今日', rating: 0, memo: '' }, ...current])
-      showToast('訪問を記録しました')
-    } else {
-      // フォールバック（DB未接続時）
-      setVisits((current) => [{ id: Date.now(), spotId: selected.id, date: '今日', rating: 0, memo: '' }, ...current])
-      showToast('訪問を記録しました')
-    }
+  if (visits.some((item) => item.spotId === selected.id)) return
+
+  const newVisit = {
+    user_id: user.id,
+    spots_id: selected.id,
+    visited_at: new Date().toISOString().split('T')[0],
+    rating: 0,
+    memo: ''
   }
 
-  // Supabaseのレビュー更新
+  const { data, error } = await supabase
+    .from('visit_logs')
+    .insert([newVisit])
+    .select()
+    .single()
+
+  console.log('insert data:', data)
+  console.log('insert error:', error)
+
+  if (error) {
+    showToast('保存に失敗しました')
+    return
+  }
+
+  setVisits((current) => [
+    {
+      id: data.id,
+      spotId: data.spots_id,
+      date: data.visited_at,
+      rating: data.rating,
+      memo: data.memo
+    },
+    ...current
+  ])
+
+  showToast('訪問を記録しました')
+}
+
+// Supabaseのレビュー更新
   const handleSaveReview = async (rating: number, memo: string, updating: boolean) => {
     if (!selected) return
     
     const existing = visits.find((item) => item.spotId === selected.id)
     if (existing) {
-      await supabase?.from('visit_logs').update({ rating, memo }).eq('spot_id', selected.id)
+      await supabase
+  ?.from('visit_logs')
+  .update({ rating, memo })
+  .eq('id', existing.id)
       setVisits((items) => items.map((item) => item.spotId === selected.id ? { ...item, rating, memo } : item))
       showToast(updating ? 'レビューを更新しました' : 'レビューを保存しました')
     }
@@ -111,6 +146,10 @@ useEffect(() => {
   }
 
   const showToast = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2600) }
+  const logout = async () => {
+  await supabase?.auth.signOut()
+  window.location.href = '/login'
+}
 if (!user) {
   return (
     <div className="p-10 text-center">
@@ -123,22 +162,55 @@ if (!user) {
     </div>
   )
 }
+
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 md:px-10">
-        <button onClick={() => setView('home')} className="flex items-center gap-2 text-left" aria-label="トップへ戻る">
-          <span className="flex size-10 items-center justify-center rounded-2xl bg-[#1769aa] text-white shadow-lg shadow-blue-200">
-            <MapPin className="size-5" fill="currentColor" />
-          </span>
-          <span>
-            <span className="block text-lg font-bold tracking-tight">よりみち広島</span>
-            <span className="block text-[11px] font-medium text-slate-500">あなたに合う、広島のお出かけ。</span>
-          </span>
-        </button>
-        <button onClick={() => setView('history')} className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:ring-blue-300">
-          <Heart className="size-4 text-orange-500" fill="currentColor" />訪問履歴
-        </button>
-      </header>
+      
+ <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 md:px-10">
+
+  <button
+    onClick={() => setView('home')}
+    className="flex items-center gap-2 text-left"
+    aria-label="トップへ戻る"
+  >
+    <span className="flex size-10 items-center justify-center rounded-2xl bg-[#1769aa] text-white">
+      <MapPin className="size-5" fill="currentColor" />
+    </span>
+
+    <span>
+      <span className="block text-lg font-bold">
+        よりみち広島
+      </span>
+
+      <span className="block text-[11px] text-slate-500">
+        あなたに合う、広島のお出かけ。
+      </span>
+
+      {user?.email && (
+        <span className="block text-[11px] text-slate-400">
+          {user.email}
+        </span>
+      )}
+    </span>
+  </button>
+
+  <div className="flex items-center gap-3">
+    <button
+      onClick={() => setView('history')}
+      className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200"
+    >
+      <Heart className="size-4 text-orange-500" fill="currentColor" />
+      訪問履歴
+    </button>
+
+    <button
+      onClick={logout}
+      className="rounded-full bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 ring-1 ring-red-200"
+    >
+      ログアウト
+    </button>
+  </div>
+</header>
 
       <div className="mx-auto w-full max-w-6xl px-5 pb-12 md:px-10">
         {view === 'home' && (
