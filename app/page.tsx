@@ -27,23 +27,10 @@ export default function Page() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [toast, setToast] = useState('')
 
-  // Supabaseからスポットデータと訪問履歴を取得
-<<<<<<< HEAD
- useEffect(() => {
+// Supabaseからスポットデータと訪問履歴を取得
+useEffect(() => {
   const fetchData = async () => {
     if (!supabase) return
-=======
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return
-      // スポット一覧の取得
-      const { data: spotsData, error } = await supabase.from('spots').select('*')
-      console.log('spotsData', spotsData)
-      console.log('error', error)
-      if (spotsData && spotsData.length > 0) {
-        setSpots(spotsData)
-      }
->>>>>>> 2d36030e4486702380e33a42a681b07f9320fa94
 
     // ログインユーザー取得
     const {
@@ -78,15 +65,11 @@ export default function Page() {
         }))
       )
     }
-<<<<<<< HEAD
   }
-=======
-    fetchData()
-  }, [])
->>>>>>> 2d36030e4486702380e33a42a681b07f9320fa94
 
   fetchData()
 }, [])
+
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
   const openDetail = (spot: Spot) => { setSelected(spot); setView('detail') }
 
