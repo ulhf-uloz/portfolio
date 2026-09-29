@@ -27,8 +27,13 @@ export default function Page() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [toast, setToast] = useState('')
 
+<<<<<<< HEAD
 // Supabaseからスポットデータと訪問履歴を取得
 useEffect(() => {
+=======
+  // Supabaseからスポットデータと訪問履歴を取得
+ useEffect(() => {
+>>>>>>> cd7b3cc7cf40966d7ddc1be4af86885fda483e65
   const fetchData = async () => {
     if (!supabase) return
 
