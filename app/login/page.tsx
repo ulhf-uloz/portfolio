@@ -8,6 +8,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
 
   const signUp = async () => {
+    if (!supabase) {
+      alert('Supabaseが設定されていません')
+      return
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -22,6 +26,10 @@ export default function LoginPage() {
   }
 
   const signIn = async () => {
+    if (!supabase) {
+      alert('Supabaseが設定されていません')
+      return
+    }
     const { error } =
       await supabase.auth.signInWithPassword({
         email,

@@ -28,22 +28,9 @@ export default function Page() {
   const [toast, setToast] = useState('')
 
   // Supabaseからスポットデータと訪問履歴を取得
-<<<<<<< HEAD
  useEffect(() => {
   const fetchData = async () => {
     if (!supabase) return
-=======
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return
-      // スポット一覧の取得
-      const { data: spotsData, error } = await supabase.from('spots').select('*')
-      console.log('spotsData', spotsData)
-      console.log('error', error)
-      if (spotsData && spotsData.length > 0) {
-        setSpots(spotsData)
-      }
->>>>>>> 2d36030e4486702380e33a42a681b07f9320fa94
 
     // ログインユーザー取得
     const {
@@ -78,12 +65,7 @@ export default function Page() {
         }))
       )
     }
-<<<<<<< HEAD
   }
-=======
-    fetchData()
-  }, [])
->>>>>>> 2d36030e4486702380e33a42a681b07f9320fa94
 
   fetchData()
 }, [])
