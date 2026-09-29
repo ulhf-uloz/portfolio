@@ -2,21 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ChevronRight, Clock3, ExternalLink, Heart, MapPin, Star, Utensils, Waves, Zap } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
-
-// 1. Supabaseクライアントの作成（スライドのプログラムを組み込み）
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    })
-  : null
+import { supabase } from '@/lib/supabase/client'
 
 type Mood = 'ご飯' | 'リラックス' | 'アクティビティ'
 type Visit = { id: number; spotId: number; date: string; rating: number; memo: string }
@@ -34,6 +20,7 @@ const options = [{ label: 'ご飯', icon: Utensils, note: 'おいしいものを
 const areas = ['全エリア', '広島市', '宮島・廿日市', '呉・江田島', '東広島・西条', '竹原・三原', '尾道', '福山', '世羅', '三次', '庄原', '芸北']
 
 export default function Page() {
+  const [user,setUser] = useState<any>(null)
   const [spots, setSpots] = useState<Spot[]>(initialSpots)
   const [mood, setMood] = useState<Mood>('リラックス'), [stamina, setStamina] = useState('散歩レベル'), [duration, setDuration] = useState('半日'), [area, setArea] = useState('全エリア')
   const [view, setView] = useState<'home' | 'recommendations' | 'detail' | 'history'>('home'), [selected, setSelected] = useState<Spot | null>(null)
@@ -41,34 +28,47 @@ export default function Page() {
   const [toast, setToast] = useState('')
 
   // Supabaseからスポットデータと訪問履歴を取得
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return
-      // スポット一覧の取得
-      const { data: spotsData } = await supabase.from('spots').select('*')
-      if (spotsData && spotsData.length > 0) {
-        setSpots(spotsData)
-      }
+ useEffect(() => {
+  const fetchData = async () => {
+    if (!supabase) return
 
-      // 訪問履歴の取得
-      const { data: visitsData } = await supabase.from('visit_logs').select('*').order('created_at', { ascending: false })
-      if (visitsData) {
-        setVisits(visitsData.map((v: { id: number; spot_id: number; date: string | null; rating: number | null; memo: string | null }) => ({
+    // ログインユーザー取得
+    const {
+      data: { user }
+    } = await supabase.auth.getUser()
+
+    setUser(user)
+
+    // スポット一覧の取得
+    const { data: spotsData } = await supabase
+      .from('spots')
+      .select('*')
+
+    if (spotsData && spotsData.length > 0) {
+      setSpots(spotsData)
+    }
+
+    // 訪問履歴の取得
+    const { data: visitsData } = await supabase
+      .from('visit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (visitsData) {
+      setVisits(
+        visitsData.map((v) => ({
           id: v.id,
           spotId: v.spot_id,
           date: v.date || '今日',
           rating: v.rating || 0,
           memo: v.memo || ''
-        })))
-      }
+        }))
+      )
     }
-    fetchData(const { data: spotsData, error } =
-  await supabase.from('spots').select('*')
+  }
 
-console.log('spotsData', spotsData)
-console.log('error', error))
-  }, [])
-
+  fetchData()
+}, [])
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
   const openDetail = (spot: Spot) => { setSelected(spot); setView('detail') }
 
@@ -111,7 +111,18 @@ console.log('error', error))
   }
 
   const showToast = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2600) }
-
+if (!user) {
+  return (
+    <div className="p-10 text-center">
+      <a
+        href="/login"
+        className="text-blue-600 underline"
+      >
+        ログインしてください
+      </a>
+    </div>
+  )
+}
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 md:px-10">
