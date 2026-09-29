@@ -27,13 +27,8 @@ export default function Page() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [toast, setToast] = useState('')
 
-<<<<<<< HEAD
 // Supabaseからスポットデータと訪問履歴を取得
 useEffect(() => {
-=======
-  // Supabaseからスポットデータと訪問履歴を取得
- useEffect(() => {
->>>>>>> cd7b3cc7cf40966d7ddc1be4af86885fda483e65
   const fetchData = async () => {
     if (!supabase) return
 
@@ -74,7 +69,6 @@ useEffect(() => {
 
   fetchData()
 }, [])
-
   const recommendations = useMemo(() => spots.filter((spot) => (spot.category === mood || mood === 'リラックス') && (area === '全エリア' || spot.area === area)).slice(0, 3), [spots, mood, area])
   const openDetail = (spot: Spot) => { setSelected(spot); setView('detail') }
 
