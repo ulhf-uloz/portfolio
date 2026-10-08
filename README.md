@@ -8,6 +8,10 @@
 * **スポット詳細 ＆ ナビ連携:** スポットの写真・説明の確認、Google Mapsへの直接遷移
 * **マイページ（行ったところログ）:** 過去に決定したスポットを一覧管理（タップで詳細の再確認が可能）
 
+##サイトイメージ
+![アプリ画面](https://github.com/ulhf-uloz/portfolio/blob/a4394bb9053e32266ce6f5d3835ff9015c9fbf2e/docs/portfolio%20readme%20%E3%82%A2%E3%83%97%E3%83%AA%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E7%94%BB%E5%83%8F.png?raw-true)
+
+
 ## サイトURL
 * https://portfolio-o415bmvb8-tokutoku0623-2064s-projects.vercel.app/
 
