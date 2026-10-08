@@ -12,5 +12,4 @@
 * **フロントエンド:** Next.js / React, Tailwind CSS
 * **バックエンド:** Next.js API Routes / Node.js
 * **データベース:** Supabase (PostgreSQL)
-* **外部連携:** Google Maps API
 * **デプロイ:** Vercel
