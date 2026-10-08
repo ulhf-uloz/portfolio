@@ -8,6 +8,9 @@
 * **スポット詳細 ＆ ナビ連携:** スポットの写真・説明の確認、Google Mapsへの直接遷移
 * **マイページ（行ったところログ）:** 過去に決定したスポットを一覧管理（タップで詳細の再確認が可能）
 
+## サイトURL
+* https://portfolio-o415bmvb8-tokutoku0623-2064s-projects.vercel.app/
+
 ## 🛠️ 使用技術
 * **フロントエンド:** Next.js / React, Tailwind CSS
 * **バックエンド:** Next.js API Routes / Node.js
